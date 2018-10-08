@@ -41,6 +41,11 @@ func NewECDSAKey(seed []byte) (*ecdsaKey, error) {
 	return &ecdsaKey{newKey(seed)}, nil
 }
 
+func LoadECDSKey(privateKeyBytes []byte) *ecdsaKey {
+	pri, _ := btcec.PrivKeyFromBytes(btcec.S256(), privateKeyBytes)
+	return &ecdsaKey{pri}
+}
+
 func (k *ecdsaKey) generateKey(sequence uint32) *btcec.PrivateKey {
 	seed := make([]byte, btcec.PubKeyBytesLenCompressed+4)
 	copy(seed, k.PubKey().SerializeCompressed())
