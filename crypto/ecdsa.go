@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/rand"
 	"encoding/binary"
+	"fmt"
 	"math/big"
 
 	"github.com/btcsuite/btcd/btcec"
@@ -42,8 +43,11 @@ func NewECDSAKey(seed []byte) (*ecdsaKey, error) {
 }
 
 func LoadECDSKey(privateKeyBytes []byte) *ecdsaKey {
-	pri, _ := btcec.PrivKeyFromBytes(btcec.S256(), privateKeyBytes)
-	return &ecdsaKey{pri}
+	pri, pub := btcec.PrivKeyFromBytes(btcec.S256(), privateKeyBytes)
+	fmt.Printf("pubb1 %x\n", pri.Serialize())
+	fmt.Printf("pubb2 %x\n", pub.SerializeCompressed())
+	k := &ecdsaKey{pri}
+	return k
 }
 
 func (k *ecdsaKey) generateKey(sequence uint32) *btcec.PrivateKey {

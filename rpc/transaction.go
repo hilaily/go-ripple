@@ -41,7 +41,7 @@ func (c *Client) Transfer(from, to, currency, value, privateKey string) error {
 	}
 
 	fee := "12"
-	seq := uint32(accountInfo.Result.AccountData.Sequence + 1)
+	seq := uint32(accountInfo.Result.AccountData.Sequence)
 	lastLedgerSequence := uint32(accountInfo.Result.LedgerCurrentIndex + 5)
 
 	fromAccount, _ := data.NewAccountFromAddress(from)
@@ -91,7 +91,7 @@ func (c *Client) SignOffline(payment *data.Payment, privateKey string) (string, 
 	pri, _ := hex.DecodeString(privateKey)
 	key := crypto.LoadECDSKey(pri)
 
-	err := data.Sign(payment, key, &payment.Sequence)
+	err := data.Sign(payment, key, nil)
 	if err != nil {
 		return "", err
 	}

@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/juju/testing/checkers"
 	. "gopkg.in/check.v1"
 )
 
