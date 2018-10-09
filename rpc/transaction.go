@@ -2,9 +2,11 @@ package rpc
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"ripple/crypto"
 	"ripple/data"
+	"ripple/tools/http"
 )
 
 const (
@@ -12,10 +14,13 @@ const (
 )
 
 type Transaction struct {
-	TransactionType string
-	Account         string
-	Destination     string
-	Amount          *Amount
+	TransactionType    string
+	Account            string
+	Destination        string
+	Amount             *Amount
+	Sequence           int64
+	LastLedgerSequence int64
+	Fee                int64
 }
 
 type Amount struct {
@@ -30,56 +35,79 @@ type Params struct {
 }
 
 func (c *Client) Transfer(from, to, currency, value, privateKey string) error {
-	txn := &Transaction{
-		TransactionType: "Payment",
-		Account:         from,
-		Destination:     to,
-		Amount: &Amount{
-			Currency: currency,
-			Value:    value,
-			Issuer:   from,
-		},
+	accountInfo, err := c.GetAccountInfo(from)
+	if err != nil {
+		return fmt.Errorf("get account info err: %v\n", err)
 	}
-	c.SignOffline(txn, privateKey)
 
-	params := Params{
-		Method: "sign",
-		Params: []map[string]interface{}{
-			"offline":      true,
-			"tx_json":      txn,
-			"fee_mult_max": 1000,
-		},
-	}
-	return nil
-}
+	fee := "12"
+	seq := uint32(accountInfo.Result.AccountData.Sequence + 1)
+	lastLedgerSequence := uint32(accountInfo.Result.LedgerCurrentIndex + 5)
 
-// Sign 给交易签名
-// 使用的这个库的方法，没有完全理解其逻辑
-func (c *Client) SignOffline(txn *Transaction, privateKey string) error {
-	fromAccount, _ := data.NewAccountFromAddress(txn.Account)
-	toAccount, _ := data.NewAccountFromAddress(txn.Destination)
-	amount, _ := data.NewAmount(txn.Amount.Value + "/" + txn.Amount.Currency)
+	fromAccount, _ := data.NewAccountFromAddress(from)
+	toAccount, _ := data.NewAccountFromAddress(to)
+	amount, _ := data.NewAmount(value + "/" + currency)
+	feeVal, _ := data.NewValue(fee, true)
+
+	//flags := data.TransactionFlag(uint32(2147483648))
+	//seq = uint32(10)
+	//lastLedgerSequence = uint32(13308150)
+
 	txnBase := data.TxBase{
-		TransactionType: data.PAYMENT,
-		Account:         *fromAccount,
+		TransactionType:    data.PAYMENT,
+		Account:            *fromAccount,
+		Sequence:           seq,
+		Fee:                *feeVal,
+		LastLedgerSequence: &lastLedgerSequence,
 	}
-	payment := data.Payment{
+	payment := &data.Payment{
 		TxBase:      txnBase,
 		Destination: *toAccount,
 		Amount:      *amount,
 	}
 
-	pri, _ := hex.DecodeString(privateKey)
-	key := crypto.LoadECDSKey(pri)
-
-	fmt.Println("pri: ", hex.EncodeToString(key.D.Bytes()))
-	seq := uint32(1)
-	err := data.Sign(&payment, key, &seq)
+	txBlob, err := c.SignOffline(payment, privateKey)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%+v\n", payment)
+
+	py, _ := json.Marshal(payment)
+	fmt.Printf("resp: %s\n", py)
+	fmt.Println("tx blob: ", txBlob)
+
+	// submit a transaction
+	params := `{"method": "submit", "params": [{"tx_blob": "` + txBlob + `"}]}`
+	resp, err := http.HttpPost(c.rpcURL, []byte(params))
+	if err != nil {
+		return err
+	}
+	fmt.Printf("resp: %s\n", string(resp))
 	return nil
 }
 
-func (c *Client) Submit() {}
+// Sign 给交易签名
+// 使用的这个库的方法，没有完全理解其逻辑
+func (c *Client) SignOffline(payment *data.Payment, privateKey string) (string, error) {
+	pri, _ := hex.DecodeString(privateKey)
+	key := crypto.LoadECDSKey(pri)
+
+	err := data.Sign(payment, key, &payment.Sequence)
+	if err != nil {
+		return "", err
+	}
+	return c.MakeTxBlob(payment)
+}
+
+func (c *Client) MakeTxBlob(payment *data.Payment) (string, error) {
+	fmt.Println("sign pub key: ", payment.SigningPubKey.String())
+	_, raw, err := data.Raw(data.Transaction(payment))
+	if err != nil {
+		return "", err
+	}
+	txBlob := fmt.Sprintf("%X", raw)
+	return txBlob, nil
+}
+
+func (c *Client) Submit() {
+
+}

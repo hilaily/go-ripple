@@ -7,18 +7,6 @@ import (
 	"ripple/tools/http"
 )
 
-type Client struct {
-	rpcURL string
-	apiURL string
-}
-
-func NewClient(rpcURL, apiURL string) *Client {
-	return &Client{
-		rpcURL: rpcURL,
-		apiURL: apiURL,
-	}
-}
-
 type AccountBalancesStruct struct {
 	Result      string     `json: "result"`
 	LedgerIndex int64      `json: "ledger_index"`
@@ -58,4 +46,43 @@ func (c *Client) GetAccountBalances(address string, queryParams map[string]strin
 		return balance, fmt.Errorf(balance.Message)
 	}
 	return balance, nil
+}
+
+type resAccountInfo struct {
+	Result resResult
+}
+
+type resResult struct {
+	Validated          bool
+	Status             string
+	LedgerCurrentIndex int64          `json:"ledger_current_index"`
+	AccountData        resAccountData `json:"account_data"`
+}
+
+type resAccountData struct {
+	Index    string
+	Sequence int64
+}
+
+func (c *Client) GetAccountInfo(address string) (*resAccountInfo, error) {
+	params := map[string]interface{}{
+		"method": "account_info",
+		"params": []map[string]string{
+			{
+				"account": address,
+				"ledgder": "validated",
+			},
+		},
+	}
+	str, _ := json.Marshal(params)
+	resp, err := http.HttpPost(c.rpcURL, str)
+	if err != nil {
+		return nil, err
+	}
+	res := &resAccountInfo{}
+	err = json.Unmarshal(resp, res)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
