@@ -3,21 +3,21 @@ package rpc
 import (
 	"encoding/hex"
 	"fmt"
-	"ripple/data"
+	"go-ripple/data"
 	"testing"
 )
 
 func TestSign(t *testing.T) {
-	from := "rsHRq2asWJDs87eRgXNUCZk2PjbfrPgUKh"
-	to := "rBx7ozXTBtEzXw6FajXAAyGKG5G5b8fhh3"
-	value := "0.1"
-	currency := "XRP"
-	pri := "86029426A6D950A14CEDD1AE33F0EB8C7CE1C0E8190D41D82C52EA160084B9E8"
+	//from := "rsHRq2asWJDs87eRgXNUCZk2PjbfrPgUKh"
+	//to := "rBx7ozXTBtEzXw6FajXAAyGKG5G5b8fhh3"
+	//value := "0.1"
+	//currency := "XRP"
+	//pri := "86029426A6D950A14CEDD1AE33F0EB8C7CE1C0E8190D41D82C52EA160084B9E8"
 
-	_, err := client.Transfer(from, to, currency, value, pri)
-	if err != nil {
-		fmt.Println("err: ", err)
-	}
+	//_, err := client.Transfer(from, to, currency, value, pri)
+	//if err != nil {
+	//	fmt.Println("err: ", err)
+	//}
 }
 
 // tx_blob
@@ -61,7 +61,7 @@ func TestMakeBlob(t *testing.T) {
 		Destination: *toAccount,
 	}
 
-	res, err := client.MakeTxBlob(&payment)
+	res, err := client.makeTxBlob(&payment)
 	if err != nil {
 		t.Error("gen blob err: ", err)
 	}

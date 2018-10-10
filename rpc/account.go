@@ -4,9 +4,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"go-ripple/crypto"
+	"go-ripple/tools/http"
 	"net/url"
-	"ripple/crypto"
-	"ripple/tools/http"
 )
 
 // GenAddress 生成账户地址
@@ -30,8 +30,10 @@ func (c *Client) GetAccountBalances(address string, queryParams map[string]strin
 	}
 	host := "/v2/accounts/" + address + "/balances"
 	values := make(url.Values)
-	for key, val := range queryParams {
-		values.Add(key, val)
+	if queryParams != nil {
+		for key, val := range queryParams {
+			values.Add(key, val)
+		}
 	}
 	queryUrl := c.apiURL + host + values.Encode()
 	resp, err := http.HttpGet(queryUrl)
