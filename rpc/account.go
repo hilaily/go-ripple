@@ -50,23 +50,7 @@ func (c *Client) GetAccountBalances(address string, queryParams map[string]strin
 	return balance, nil
 }
 
-type resAccountInfo struct {
-	Result resResult
-}
-
-type resResult struct {
-	Validated          bool
-	Status             string
-	LedgerCurrentIndex int64          `json:"ledger_current_index"`
-	AccountData        resAccountData `json:"account_data"`
-}
-
-type resAccountData struct {
-	Index    string
-	Sequence int64
-}
-
-func (c *Client) GetAccountInfo(address string) (*resAccountInfo, error) {
+func (c *Client) GetAccountInfo(address string) (*AccountInfoResult, error) {
 	params := map[string]interface{}{
 		"method": "account_info",
 		"params": []map[string]string{
@@ -81,10 +65,10 @@ func (c *Client) GetAccountInfo(address string) (*resAccountInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	res := &resAccountInfo{}
+	res := &AccountInfoResp{}
 	err = json.Unmarshal(resp, res)
 	if err != nil {
 		return nil, err
 	}
-	return res, nil
+	return res.Result, nil
 }
