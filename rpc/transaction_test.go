@@ -14,7 +14,7 @@ func TestSign(t *testing.T) {
 	currency := "XRP"
 	pri := "86029426A6D950A14CEDD1AE33F0EB8C7CE1C0E8190D41D82C52EA160084B9E8"
 
-	err := client.Transfer(from, to, currency, value, pri)
+	_, err := client.Transfer(from, to, currency, value, pri)
 	if err != nil {
 		fmt.Println("err: ", err)
 	}
@@ -66,4 +66,13 @@ func TestMakeBlob(t *testing.T) {
 		t.Error("gen blob err: ", err)
 	}
 	t.Log("tx blog: ", res)
+}
+
+func TestTX(t *testing.T) {
+	hash := "A2603189C714F39CBBDD29705360EA3EA8EDECAD5FF6FE2762E65814A9408151"
+	res, err := client.TX(hash)
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Printf("%+v\n", res)
 }

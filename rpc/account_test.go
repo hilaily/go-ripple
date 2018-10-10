@@ -30,3 +30,15 @@ func TestGetAccountInfo(t *testing.T) {
 	}
 	fmt.Printf("res: %+v\n", res)
 }
+
+func TestGenAddress(t *testing.T) {
+	key, addr, err := client.GenAddress()
+	if err != nil {
+		t.Error(err)
+	}
+	var seq0 uint32
+
+	t.Log("pub: ", key.Public(&seq0))
+	t.Log("pri: ", key.Private(&seq0))
+	t.Log("addr: ", addr)
+}

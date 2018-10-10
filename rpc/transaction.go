@@ -10,34 +10,23 @@ import (
 )
 
 const (
-	TXN_TYPE_PAYMENT = "Payment"
+	default_currency = "XRP"
 )
 
-type Transaction struct {
-	TransactionType    string
-	Account            string
-	Destination        string
-	Amount             *Amount
-	Sequence           int64
-	LastLedgerSequence int64
-	Fee                int64
-}
-
-type Amount struct {
-	Currency string
-	Value    string
-	Issuer   string
-}
-
-type Params struct {
-	Method string        `json:"method"`
-	Params []interface{} `json:"params"`
-}
-
-func (c *Client) Transfer(from, to, currency, value, privateKey string) error {
+// Transfer 发起交易
+// from, to 账户地址
+// currency 货币类型 默认 XRP
+// value 交易金额
+// privateKey 私钥的 16 进制编码
+func (c *Client) Transfer(from, to, currency, value, privateKey string) (*SubmitResult, error) {
+	// 获取账户的 Sequence 和 LedgerCurrentIndex
+	// 交易流程 https://developers.ripple.com/reliable-transaction-submission.html
 	accountInfo, err := c.GetAccountInfo(from)
 	if err != nil {
-		return fmt.Errorf("get account info err: %v\n", err)
+		return nil, err
+	}
+	if currency == "" {
+		currency = default_currency
 	}
 
 	fee := "12"
@@ -48,10 +37,6 @@ func (c *Client) Transfer(from, to, currency, value, privateKey string) error {
 	toAccount, _ := data.NewAccountFromAddress(to)
 	amount, _ := data.NewAmount(value + "/" + currency)
 	feeVal, _ := data.NewValue(fee, true)
-
-	//flags := data.TransactionFlag(uint32(2147483648))
-	//seq = uint32(10)
-	//lastLedgerSequence = uint32(13308150)
 
 	txnBase := data.TxBase{
 		TransactionType:    data.PAYMENT,
@@ -68,21 +53,16 @@ func (c *Client) Transfer(from, to, currency, value, privateKey string) error {
 
 	txBlob, err := c.SignOffline(payment, privateKey)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
-	py, _ := json.Marshal(payment)
-	fmt.Printf("resp: %s\n", py)
-	fmt.Println("tx blob: ", txBlob)
-
-	// submit a transaction
-	params := `{"method": "submit", "params": [{"tx_blob": "` + txBlob + `"}]}`
-	resp, err := http.HttpPost(c.rpcURL, []byte(params))
+	resp, err := c.Submit(txBlob)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	fmt.Printf("resp: %s\n", string(resp))
-	return nil
+	if resp.EngineResultCode != 0 {
+		return resp, fmt.Errorf(resp.EngineResultMessage)
+	}
+	return resp, nil
 }
 
 // Sign 给交易签名
@@ -98,6 +78,8 @@ func (c *Client) SignOffline(payment *data.Payment, privateKey string) (string, 
 	return c.MakeTxBlob(payment)
 }
 
+// MakeTxblob
+// 构造 txBlob，用于之后提交交易
 func (c *Client) MakeTxBlob(payment *data.Payment) (string, error) {
 	fmt.Println("sign pub key: ", payment.SigningPubKey.String())
 	_, raw, err := data.Raw(data.Transaction(payment))
@@ -108,6 +90,30 @@ func (c *Client) MakeTxBlob(payment *data.Payment) (string, error) {
 	return txBlob, nil
 }
 
-func (c *Client) Submit() {
+// Submit ripple submit command
+// 提交交易给瑞波链
+func (c *Client) Submit(txBlob string) (*SubmitResult, error) {
+	res := &SubmitResp{}
+	params := `{"method": "submit", "params": [{"tx_blob": "` + txBlob + `"}]}`
+	resp, err := http.HttpPost(c.rpcURL, []byte(params))
+	if err != nil {
+		return nil, err
+	}
+	err = json.Unmarshal(resp, res)
+	return res.Result, err
+}
 
+func (c *Client) GetFee() {
+
+}
+
+func (c *Client) TX(hash string) (*TxResult, error) {
+	params := `{"method":"tx", "params": [{"transaction":"` + hash + `"}]}`
+	resp, err := http.HttpPost(c.rpcURL, []byte(params))
+	if err != nil {
+		return nil, err
+	}
+	res := &TxResp{}
+	err = json.Unmarshal(resp, res)
+	return res.Result, nil
 }

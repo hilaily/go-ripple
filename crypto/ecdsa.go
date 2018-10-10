@@ -3,10 +3,10 @@ package crypto
 import (
 	"crypto/rand"
 	"encoding/binary"
-	"fmt"
 	"math/big"
 
 	"github.com/btcsuite/btcd/btcec"
+	cryptoLib "github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
@@ -15,7 +15,7 @@ var (
 	one   = big.NewInt(1)
 )
 
-type ecdsaKey struct {
+type EcdsaKey struct {
 	*btcec.PrivateKey
 }
 
@@ -32,25 +32,33 @@ func newKey(seed []byte) *btcec.PrivateKey {
 }
 
 // If seed is nil, generate a random one
-func NewECDSAKey(seed []byte) (*ecdsaKey, error) {
+func NewECDSAKey(seed []byte) (*EcdsaKey, error) {
 	if seed == nil {
 		seed = make([]byte, 16)
 		if _, err := rand.Read(seed); err != nil {
 			return nil, err
 		}
 	}
-	return &ecdsaKey{newKey(seed)}, nil
+	return &EcdsaKey{newKey(seed)}, nil
 }
 
-func LoadECDSKey(privateKeyBytes []byte) *ecdsaKey {
-	pri, pub := btcec.PrivKeyFromBytes(btcec.S256(), privateKeyBytes)
-	fmt.Printf("pubb1 %x\n", pri.Serialize())
-	fmt.Printf("pubb2 %x\n", pub.SerializeCompressed())
-	k := &ecdsaKey{pri}
+// GenEcdsaKey 生成 secp256k1 key
+func GenEcdsaKey() (*EcdsaKey, error) {
+	key, err := cryptoLib.GenerateKey()
+	if err != nil {
+		return nil, err
+	}
+	k := (*btcec.PrivateKey)(key)
+	return &EcdsaKey{k}, nil
+}
+
+func LoadECDSKey(privateKeyBytes []byte) *EcdsaKey {
+	pri, _ := btcec.PrivKeyFromBytes(btcec.S256(), privateKeyBytes)
+	k := &EcdsaKey{pri}
 	return k
 }
 
-func (k *ecdsaKey) generateKey(sequence uint32) *btcec.PrivateKey {
+func (k *EcdsaKey) generateKey(sequence uint32) *btcec.PrivateKey {
 	seed := make([]byte, btcec.PubKeyBytesLenCompressed+4)
 	copy(seed, k.PubKey().SerializeCompressed())
 	binary.BigEndian.PutUint32(seed[btcec.PubKeyBytesLenCompressed:], sequence)
@@ -60,21 +68,21 @@ func (k *ecdsaKey) generateKey(sequence uint32) *btcec.PrivateKey {
 	return key
 }
 
-func (k *ecdsaKey) Id(sequence *uint32) []byte {
+func (k *EcdsaKey) Id(sequence *uint32) []byte {
 	if sequence == nil {
 		return Sha256RipeMD160(k.PubKey().SerializeCompressed())
 	}
 	return Sha256RipeMD160(k.Public(sequence))
 }
 
-func (k *ecdsaKey) Private(sequence *uint32) []byte {
+func (k *EcdsaKey) Private(sequence *uint32) []byte {
 	if sequence == nil {
 		return k.D.Bytes()
 	}
 	return k.generateKey(*sequence).D.Bytes()
 }
 
-func (k *ecdsaKey) Public(sequence *uint32) []byte {
+func (k *EcdsaKey) Public(sequence *uint32) []byte {
 	if sequence == nil {
 		return k.PubKey().SerializeCompressed()
 	}

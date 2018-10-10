@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"ripple/crypto"
 	"ripple/tools/http"
 )
 
@@ -20,6 +21,16 @@ type Balance struct {
 	Currency     string `json:"currency"`
 	Counterparty string
 	Value        string
+}
+
+func (c *Client) GenAddress() (*crypto.EcdsaKey, string, error) {
+	key, err := crypto.GenEcdsaKey()
+	if err != nil {
+		return key, "", err
+	}
+	var seq0 uint32
+	address, err := crypto.AccountId(key, &seq0)
+	return key, address.String(), err
 }
 
 // GetAccountBalances 获取账户余额
