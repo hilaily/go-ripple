@@ -1,13 +1,13 @@
 package rpc
 
 type Client struct {
-	rpcURL string
-	apiURL string
+	rpcJsonURL string
+	apiURL     string
 }
 
-func NewClient(rpcURL, apiURL string) *Client {
+func NewClient(rpcJsonURL, apiURL string) *Client {
 	return &Client{
-		rpcURL: rpcURL,
-		apiURL: apiURL,
+		rpcJsonURL: rpcJsonURL,
+		apiURL:     apiURL,
 	}
 }

@@ -32,13 +32,11 @@ func TestGetAccountInfo(t *testing.T) {
 }
 
 func TestGenAddress(t *testing.T) {
-	key, addr, err := client.GenAddress()
+	pri, pub, addr, err := client.GenAddress()
 	if err != nil {
 		t.Error(err)
 	}
-	var seq0 uint32
-
-	t.Log("pub: ", key.Public(&seq0))
-	t.Log("pri: ", key.Private(&seq0))
+	t.Log("pri: ", pri)
+	t.Log("pub: ", pub)
 	t.Log("addr: ", addr)
 }

@@ -7,6 +7,7 @@ import (
 	"ripple/crypto"
 	"ripple/data"
 	"ripple/tools/http"
+	"strconv"
 )
 
 const (
@@ -29,7 +30,12 @@ func (c *Client) Transfer(from, to, currency, value, privateKey string) (*Submit
 		currency = default_currency
 	}
 
-	fee := "12"
+	serverInfo, err := c.GetServerInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	fee := strconv.FormatInt(serverInfo.State.ValidatedLedger.BaseFee, 10)
 	seq := uint32(accountInfo.Result.AccountData.Sequence)
 	lastLedgerSequence := uint32(accountInfo.Result.LedgerCurrentIndex + 5)
 
@@ -65,6 +71,8 @@ func (c *Client) Transfer(from, to, currency, value, privateKey string) (*Submit
 	return resp, nil
 }
 
+// sign 命令
+// https://developers.ripple.com/sign.html
 // Sign 给交易签名
 // 使用的这个库的方法，没有完全理解其逻辑
 func (c *Client) SignOffline(payment *data.Payment, privateKey string) (string, error) {
@@ -90,12 +98,14 @@ func (c *Client) MakeTxBlob(payment *data.Payment) (string, error) {
 	return txBlob, nil
 }
 
+// submit 命令
+// https://developers.ripple.com/submit.html
 // Submit ripple submit command
 // 提交交易给瑞波链
 func (c *Client) Submit(txBlob string) (*SubmitResult, error) {
 	res := &SubmitResp{}
 	params := `{"method": "submit", "params": [{"tx_blob": "` + txBlob + `"}]}`
-	resp, err := http.HttpPost(c.rpcURL, []byte(params))
+	resp, err := http.HttpPost(c.rpcJsonURL, []byte(params))
 	if err != nil {
 		return nil, err
 	}
@@ -103,13 +113,11 @@ func (c *Client) Submit(txBlob string) (*SubmitResult, error) {
 	return res.Result, err
 }
 
-func (c *Client) GetFee() {
-
-}
-
+// tx 命令
+// https://developers.ripple.com/tx.html
 func (c *Client) TX(hash string) (*TxResult, error) {
 	params := `{"method":"tx", "params": [{"transaction":"` + hash + `"}]}`
-	resp, err := http.HttpPost(c.rpcURL, []byte(params))
+	resp, err := http.HttpPost(c.rpcJsonURL, []byte(params))
 	if err != nil {
 		return nil, err
 	}
