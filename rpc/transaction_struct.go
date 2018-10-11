@@ -107,3 +107,33 @@ type TxPreviousFields struct {
 	Balance  string
 	Sequence int64
 }
+
+type PaymentResp struct {
+	Result   string
+	Count    int64
+	Marker   string
+	Payments []Payment
+}
+
+type Payment struct {
+	Amount                    string
+	DeliveredAomunt           string                   `json:"delivered_amount"`
+	DestinationBalanceChanges []*PaymentBalanceChanges `json:"destination_balance_changes"`
+	SourceBalanceChanges      []*PaymentBalanceChanges `json:"source_balance_changes"`
+	TransacationCost          string                   `json:"transacation_cost"`
+	TxIndex                   int64                    `json:"tx_index"`
+	Currency                  string
+	Destination               string
+	ExecutedTime              string `json:"executed_time"`
+	Issuer                    string
+	LedgerIndex               int64 `json:"ledger_index"`
+	Source                    string
+	SourceCurrency            string
+	TxHash                    string `json:"tx_hash"`
+}
+
+type PaymentBalanceChanges struct {
+	Counterparty string
+	Currency     string
+	Value        string
+}

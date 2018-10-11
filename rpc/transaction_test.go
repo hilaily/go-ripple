@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-ripple/data"
 	"testing"
+	"time"
 )
 
 func TestSign(t *testing.T) {
@@ -75,4 +76,16 @@ func TestTX(t *testing.T) {
 		t.Error(err)
 	}
 	fmt.Printf("%+v\n", res)
+}
+
+func TestPayments(t *testing.T) {
+	t1 := "2018-10-11 00:00:00"
+	t2 := "2018-10-11 13:00:00"
+	start, _ := time.Parse("2006-01-02 15:04:05", t1)
+	end, _ := time.Parse("2006-01-02 15:04:05", t2)
+	resp, err := client.Payments("XRP", start.Unix(), end.Unix(), 1, "")
+	if err != nil {
+		t.Error(err)
+	}
+	fmt.Printf("%+v\n", resp)
 }
