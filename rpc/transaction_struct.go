@@ -10,21 +10,21 @@ type SubmitResult struct {
 	EngineResultCode    int64  `json:"engine_result_code"`
 	EngineResultMessage string `json:"engine_result_message"`
 	Status              string
-	TxBlob              string `json:"tx_blob"`
-	TxJson              string `json:"tx_json"`
-	Destination         string
-	Fee                 string
-	Flags               int64
-	Sequence            int64
-	SigningPubKey       string
-	TransactionTyep     string
-	TxnSignature        string
-	Hash                string
+	TxBlob              string       `json:"tx_blob"`
+	TxJson              SubmitTxJson `json:"tx_json"`
 }
 
-type TxJson struct {
-	Account string
-	Amount  Amount
+type SubmitTxJson struct {
+	Account            string
+	Amount             string
+	Destination        string
+	Fee                string
+	LastLedgerSequence int64
+	Sequence           int64
+	SigningPubKey      string
+	TransactionType    string
+	TxnSignature       string
+	Hash               string `json:"hash"`
 }
 
 type Transaction struct {
@@ -68,8 +68,17 @@ type TxResult struct {
 	InLedger           int64
 	LedgerIndex        int64 `json:"ledger_index"`
 	Meta               *TxMeta
-	Status             string `json:"status"`
 	Validated          bool   `json:"validated"`
+	Status             string `json:"status"`
+	Error              string
+	ErrorMessage       string `json:"error_message"`
+	ErrorCode          int64  `json:"error_code"`
+	Requeset           *TxRequest
+}
+
+type TxRequest struct {
+	Command     string
+	Transaction string
 }
 
 type TxMeta struct {

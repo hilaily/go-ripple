@@ -28,7 +28,11 @@ const (
 func (c *Client) Sign(from, to, currency, value, fee, privateKey string, accountSequence, lastLedgerSequence uint32) (string, error) {
 	fromAccount, _ := data.NewAccountFromAddress(from)
 	toAccount, _ := data.NewAccountFromAddress(to)
-	amount, _ := data.NewAmount(value + "/" + currency)
+	a := value
+	if currency != "" {
+		a += "/" + currency
+	}
+	amount, _ := data.NewAmount(a)
 	feeVal, _ := data.NewValue(fee, true)
 
 	txnBase := data.TxBase{
@@ -86,6 +90,7 @@ func (c *Client) Submit(txBlob string) (*SubmitResult, error) {
 		return nil, err
 	}
 	err = json.Unmarshal(resp, res)
+	fmt.Println(string(resp))
 	return res.Result, err
 }
 
