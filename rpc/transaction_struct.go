@@ -112,12 +112,12 @@ type PaymentResp struct {
 	Result   string
 	Count    int64
 	Marker   string
-	Payments []Payment
+	Payments []*Payment
 }
 
 type Payment struct {
 	Amount                    string
-	DeliveredAomunt           string                   `json:"delivered_amount"`
+	DeliveredAmount           string                   `json:"delivered_amount"`
 	DestinationBalanceChanges []*PaymentBalanceChanges `json:"destination_balance_changes"`
 	SourceBalanceChanges      []*PaymentBalanceChanges `json:"source_balance_changes"`
 	TransacationCost          string                   `json:"transacation_cost"`
