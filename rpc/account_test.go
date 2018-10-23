@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 )
@@ -39,4 +40,14 @@ func TestGenAddress(t *testing.T) {
 	t.Log("pri: ", pri)
 	t.Log("pub: ", pub)
 	t.Log("addr: ", addr)
+}
+
+func TestGetAccountTransaction(t *testing.T) {
+	address := "rh4WZwXaDhamjM7hw8gArB9Jgs6fkxUGnw"
+	resp, err := client.GetAccountTransactions(address, map[string]string{"limit": "30"})
+	if err != nil {
+		t.Error(err)
+	}
+	res, _ := json.Marshal(resp)
+	fmt.Printf("%s\n", res)
 }

@@ -72,3 +72,27 @@ func (c *Client) GetAccountInfo(address string) (*AccountInfoResult, error) {
 	}
 	return res.Result, nil
 }
+
+// GetAccountTransactions https://developers.ripple.com/data-api.html#get-account-transaction-history
+func (c *Client) GetAccountTransactions(address string, params map[string]string) (*AccountTransactionResp, error) {
+	if address == "" {
+		return nil, nil
+	}
+	uri := c.apiURL + "/v2/accounts/" + address + "/transactions"
+	query := make(url.Values)
+	if params != nil {
+		for k, v := range params {
+			query.Add(k, v)
+		}
+	}
+	if len(query) > 0 {
+		uri = uri + "?" + query.Encode()
+	}
+	resp, err := http.HttpGet(uri)
+	if err != nil {
+		return nil, err
+	}
+	res := &AccountTransactionResp{}
+	err = json.Unmarshal(resp, res)
+	return res, err
+}
